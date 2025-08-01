@@ -28,11 +28,19 @@ export const studentControllers=async (req:Request,res:Response,next:NextFunctio
 }
 
 export const studentLoginController=async (req:Request,res:Response,next:NextFunction)=>{
-    const id=req.params;
-    const newData= await Student.find());
+    const {_id}=req.params;
+    const newData= await Student.findById(_id);
+    if(!newData){
+        return res.status(400).json({
+            success:false,
+            message:"user does note exist"
+        })
+    }
     res.status(200).json({
         success:true,
         message:"Data is here",
+        data:{id:newData._id, email:newData.email}
+        
 
 
     })
