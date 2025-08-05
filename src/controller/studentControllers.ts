@@ -112,7 +112,6 @@ export const studentGet=async (req:Request,res:Response,next:NextFunction)=>{
 
 
 
-
 export const filterData=async(req:Request,res:Response,next:NextFunction)=>{
      try{const minAge=parseInt(req.query.minAge as string) || 0;
      const maxAge=parseInt(req.query.maxAge as string)|| 100;
@@ -145,6 +144,31 @@ export const filterData=async(req:Request,res:Response,next:NextFunction)=>{
     }
 
 }
+
+
+export const studentUpdate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    const newData = await Student.findByIdAndUpdate(id, updatedData, { new: true });
+
+    if (!newData) {
+      return res.status(400).json({
+        success: false,
+        message: "User does not exist",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Student data updated successfully",
+      data: newData,
+    });
+  } catch (error) {
+    next(error); 
+  }
+};
 
 
 
