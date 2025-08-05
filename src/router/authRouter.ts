@@ -10,7 +10,8 @@ export const router=Router();
 
 router.post("/signup",userMiddleware,userController);
 router.post("/login",loginMiddleware, loginController);
-router.post("/postData",studentMiddleware,studentControllers);
-router.get("/getallData",verifyToken,studentMiddleware,studentGet);
+router.post("/postData",verifyToken,studentMiddleware,studentControllers);
+router.get("/getalldata",verifyToken,studentMiddleware,studentGet);
 router.get("/students/:id",verifyToken,studentMiddleware,studentId);
-router.delete("/students/id",verifyToken,studentMiddleware,studentg);
+router.delete("/students/:id",verifyToken,studentMiddleware,studentg);
+
