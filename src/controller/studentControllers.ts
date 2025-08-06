@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Student } from "../models/Student";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 export const studentControllers = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -61,24 +62,35 @@ export const studentId=async (req:Request,res:Response,next:NextFunction)=>{
     })
 }
 
-export const studentg=async (req:Request,res:Response,next:NextFunction)=>{
-    const {email}=req.params;
-    const newData= await Student.deleteOne({email});
-    if(!newData){
-        return res.status(400).json({
-            success:false,
-            message:"user does note exist"
-        })
+export const deleteId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Id format",
+      });
     }
-    res.status(200).json({
-        success:true,
-        message:"Data is here",
-      
-        
 
-
-    })
-}
+    const deletedData = await Student.deleteOne({ _id: id });
+    if (deletedData.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Data not found to delete",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Data deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const studentGet=async (req:Request,res:Response,next:NextFunction)=>{
     
@@ -96,21 +108,6 @@ export const studentGet=async (req:Request,res:Response,next:NextFunction)=>{
 
     })
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export const filterData=async(req:Request,res:Response,next:NextFunction)=>{
      try{const minAge=parseInt(req.query.minAge as string) || 0;
@@ -145,28 +142,95 @@ export const filterData=async(req:Request,res:Response,next:NextFunction)=>{
 
 }
 
-
-export const studentUpdate = async (req: Request, res: Response, next: NextFunction) => {
+export const updatedDataG = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
-    const updatedData = req.body;
-
-    const newData = await Student.findByIdAndUpdate(id, updatedData, { new: true });
-
-    if (!newData) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: "User does not exist",
+        message: "Invalid Id format",
       });
     }
 
-    res.status(200).json({
+    const updatedData = await Student.findByIdAndUpdate(
+      id,
+      { $set: req.body },
+      { new: true }
+    );
+    if (!updatedData) {
+      return res.status(404).json({
+        success: false,
+        message: "Data not found to update",
+      });
+    }
+    return res.status(200).json({
       success: true,
-      message: "Student data updated successfully",
-      data: newData,
+      message: "Data updated successfully",
+      updatedData: updatedData,
     });
   } catch (error) {
-    next(error); 
+    next(error);
+  }
+};
+
+export const getDataMinAge = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const minAge = parseInt(req.params.minAge as string) || 0;
+  const maxAge = parseInt(req.params.maxAge as string) || 100;
+  const findData = await Student.find({ age: { $gte: minAge, $lte: maxAge } });
+  if (findData.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No students ",
+    });
+  }
+  return res.status(200).json({
+    success: true,
+    message: "data is fetched",
+    findData,
+  });
+};
+
+export const getAgeStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const stats = await Student.aggregate([
+      {
+        $group: {
+          _id: null,
+          minAge: { $min: "$age" },
+          maxAge: { $max: "$age" },
+          avgAge: { $avg: "$age" },
+          totalStudents: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          minAge: 1,
+          maxAge: 1,
+          avgAge: { $round: ["$avgAge", 2] },
+          totalStudents: 1,
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Data fetched ",
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
